@@ -20,34 +20,47 @@
 //   например, 
 //   https://github.com/web-ifmo/php/blob/master/tasks.md:https://wdvth.ru/P37en
 
-
 // получаете из $_POST ссылку, которую ввел пользователь
 $post = $_POST;
 var_dump($post);
 $userlink = $post["url"];
 var_dump($userlink);
-$filename = 'links.txt';//файл с ссылками
-$max_len=10;
 
-function reduce_url($userlink, $filename){
-    if(check_ifempty($userlink)){
-        trim(check_url($userlink))
-        url_exists_in_file($filename, $userlink)
-        reduce()
-    }
+$filename = 'links.txt';//файл с ссылками
+
+$arr_data=file($filename, FILE_IGNORE_NEW_LINES |FILE_SKIP_EMPTY_LINES);//массив из файла
+$max_len=10;//макс длина сокращенной ссылки
+
+function reduce_url($userlink, $filename, $max_len, $arr_data){
+
+    if(checkLinkIsset($userlink)){//если в поле есть ссылка
+
+        $userlink=trim(check_url($userlink));//убираем пробелы в ссылке + проверка на корректность
+
+        $file = fopen($filename, "w+");//Открываем файл для чтения и записи; помещает указатель в начало файла и обрезает 
+        //файл до нулевой длины. Если файл не существует - пытается его создать.
+
+            if(url_exists_in_file($userlink,$arr_data)){// если ссылка уже есть в массиве файла $file
+            $existentShortUrl = findExistentShortURL($arr_data, $userlink, $max_len));// находим имеющуюся сокращенную ссылку в файле
+            echo $existentShortUrl;//показываем ее
+            }else{//если ссылка новая
+            $newShortUrl =  reduce_rename_url($userlink, $max_len, $file);//сокращаем и называем новую ссылку
+            echo $newShortUrl;//показываем
+            record_shortURL($arr_data, $newShortUrl, $userlink);//записываем в файл;
+            }
+    }else {//если в поле нет ссылки
+    echo "Сcылка не введена";
+    return false;
+}
 }
 
-//проверка на пустоту
-function check_ifempty($userlink){ 
-    if(empty($userlink)){
-    echo "Сcылка не введена";//
-    return false;
-    }
-    else{
+//проверка на пустоту поля
+function checkLinkIsset($userlink){ 
+    if(isset($userlink)){
     echo "Сcылка введена";
     return true;
     }
-}
+};
 
 //// Корректность ссылки (URL)
 function check_url($userlink){
@@ -60,81 +73,49 @@ if(filter_var($userlink, FILTER_VALIDATE_URL,FILTER_FLAG_SCHEME_REQUIRED,FILTER_
     } 
 }
 
-
-function url_exists_in_file($filename, $userlink){// проверить присутствует ли в файле ссылка, которую ввел пользователь
-    
-        $arr_data=file($filename, FILE_IGNORE_NEW_LINES |FILE_SKIP_EMPTY_LINES);//массив с ссылками
-        if($arr_data!==false){//если ссылки считаываются в массив
-        if(in_array($userlink, $arr_data)){//если есть ссылка в массиве
-            echo"Ссылка есть в файле";
-        return true;}
-        else {
-            echo "Ссылка новая"
-            return false;
+//проверка на существование ссылки в файле
+function url_exists_in_file($userlink,$arr_data){// проверить присутствует ли в файле ссылка, которую ввел пользователь
+        if($arr_data!==false){//если ссылки считываются в массив
+            if(in_array($userlink, $arr_data)){//если ссылка уже в массиве
+            return true; 
         }
-    };// Читает массив с ссылками
-    //Возвращает файл в виде массива. Каждый элемент массива соответствует строке файла, 
-    //с символами новой строки включительно. В случае ошибки file() возвращает FALSE.
+    };
 
+// Информация будет храниться в файле следующим образом:
+//   длинная ссылка:короткая ссылка
+//находим короткую ссылку
+function findExistentShortURL($arr_data, $userlink,$max_len){ 
+    $string = implode(":", $arr_data);//объединяем массив ссылок в строку c разделителем :
+    $shortlink = substr($string, strlen($userlink), $max_len);
+    //Возвращает подстроку строки string, начинающейся с последнего символа длинной ссылки,  длиной max_length символов.
+    return $shortlink;
+}
 
-
-function reduce($url, $max_len, $filename ){
-    $url_len = strlen($url);
+//функция чтобы сократить и переимновать название ссылки
+function reduce_rename_url($url, $max_len, $file){
+    $url_len = strlen($url);//длина ссылки
     if($url_len > $max_len ){
-    $url  = parse_url($url, PHP_URL_SCHEME)) . generateUrlName($max_len);
-
-    if(url_exists_in_file($filename, $url)==!false){
-        generateUrlName($max_len);
+        $http  = parse_url($url, PHP_URL_SCHEME));// http
+        $shortlink = $http . generateUrlName($max_len); //короткая ссылка http+ new url name
+        return $shortlink;
     }
 }
 
 
-
-function generateUrlName($max_len){ //генерация названия
+//генерация названия длиной max_len
+function generateUrlName($max_len){ 
 $chars = 'abdefhiknrstyzABDEFGHKNQRSTYZ23456789';
 $url_name = substr($chars, rand(1, strlen($chars)), $max_len);
-return $url_name ;
+return $url_name;
 }
 
+//substr(вх.строка $string ,с какого символа int $start , int $length  ) : string
 // var_dump($url);
 
-
-// var_dump(parse_url($url));
-// var_dump(parse_url($url, PHP_URL_SCHEME));
-// var_dump(parse_url($url, PHP_URL_USER));
-// var_dump(parse_url($url, PHP_URL_PASS));
-// var_dump(parse_url($url, PHP_URL_HOST));
-// var_dump(parse_url($url, PHP_URL_PORT));
-// var_dump(parse_url($url, PHP_URL_PATH));
-// var_dump(parse_url($url, PHP_URL_QUERY));
-// var_dump(parse_url($url, PHP_URL_FRAGMENT));
-
-
-
-
-// читаете данные из файла, проверяете, если ли в файле ссылка, которую ввел пользователь
-// если есть, возвращаете пользователю соответствующую ей короткую ссылку
-
-
-// если ссылки в файле нет, генерируете короткую ссылку,
-// например, получится https://перт.ru/4еп8оо
-// проверяете, что такой короткой ссылки нет в файле
-// (если есть, генерируете заново и снова проверяете)
-// записываете в файл длинную ссылку, которую ввел пользователь и сгенерированную короткую,
-// в файле появится новая строчка:
-// https://www.php.net/manual/ru/function.fwrite.php#https://перт.ru/4еп8оо
-// короткую ссылку отображаете пользователю:
-//echo 'https://перт.ru/4еп8оо';
-//
-?>
-
-
-<!--ссылка в файле присутствует-->
-<!-- пользователь вводит url,
-например, https://github.com/web-ifmo/php/blob/master/tasks.md
-нажимает Сократить-->
-
-<!--ссылки в файле нет-->
-<!-- пользователь вводит url,
-например, https://www.php.net/manual/ru/function.fwrite.php
-нажимает Сократить-->
+//запись сокращенной ссылки в файл после длинной
+function record_shortURL($arr_data, $newUrl, $userlink){
+    $key = array_search($userlink, $arr_data);//Возвращает ключ для $userlink
+    foreach($arr_data as $link){ //перебор массива
+    $arr_data[$key]= $userlink . ": $newUrl";// соединяем строки старой ссылки с новой в элементе массива
+    }
+}
