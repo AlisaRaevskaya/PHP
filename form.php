@@ -26,9 +26,11 @@
             <input type= "submit" value="загрузить">
     </div>
     </form>
-    <form action="link_short.php" method= "post" name="url_form">
+
+    <form action="link_short.php" method="post">
     <input type="url" name="url">
-    <button> Сократить</button>
+    <button type ="submit"> Сократить</button>
     </form>
+    
     </body>
     </html>
