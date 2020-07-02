@@ -16,14 +16,17 @@
 
 <body>
     <form action="check_files_handler.php" method="post" enctype="multiple\form-data">
-    <div>
-        <input type="text" name='title' placeholder ="Название">
-    </div>
         <div> 
         <input type="file" accept="image/*" multiple name="pictures[]">
     </div>
+    <div> 
+        <input type="file" accept="image/*" multiple name="pictures[]">
+    </div>
+    <div> 
+        <input type="file" accept="image/*" multiple name="pictures[]">
+    </div>
     <div>
-            <input type= "submit" value="загрузить">
+            <input type= "submit" value="Загрузить">
     </div>
     </form>
 

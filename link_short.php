@@ -1,5 +1,9 @@
 <?php
 
+//Не работает запись новой ссылки в файл и поиск старой сокращенной ((
+//функции record_shortURL()
+//findExistentShortURL()
+
 
 // //Реализовать сокращатель ссылок (пример):
 
@@ -41,12 +45,12 @@ function reduce_url($userlink, $filename, $max_len, $arr_data){
         //файл до нулевой длины. Если файл не существует - пытается его создать.
 
             if(url_exists_in_file($userlink,$arr_data)){// если ссылка уже есть в массиве файла $file
-            $existentShortUrl = findExistentShortURL($arr_data, $userlink, $max_len));// находим имеющуюся сокращенную ссылку в файле
-            echo $existentShortUrl;//показываем ее
+            $existentShortUrl = findExistentShortURL($arr_data, $userlink, $max_len);// находим имеющуюся сокращенную ссылку в файле
+            echo 'Уже имеющаяся сокращенная ссылка' . $existentShortUrl;//показываем ее
             }else{//если ссылка новая
             $newShortUrl =  reduce_rename_url($userlink, $max_len, $file);//сокращаем и называем новую ссылку
-            echo $newShortUrl;//показываем
-            record_shortURL($arr_data, $newShortUrl, $userlink);//записываем в файл;
+            echo 'Сокращенная ссылка' . $newShortUrl;//показываем
+            record_shortURL($arr_data, $newUrl, $userlink,$filename);//записываем в файл;
             }
     }else {//если в поле нет ссылки
     echo "Сcылка не введена";
@@ -64,7 +68,7 @@ function checkLinkIsset($userlink){
 
 //// Корректность ссылки (URL)
 function check_url($userlink){
-if(filter_var($userlink, FILTER_VALIDATE_URL,FILTER_FLAG_SCHEME_REQUIRED,FILTER_FLAG_HOST_REQUIRED)!==false){
+if(filter_var($userlink, FILTER_VALIDATE_URL)!==false){
         echo"Ссылка корректна";
         return $userlink;
 }else{//если данные введены некорректно
@@ -79,6 +83,7 @@ function url_exists_in_file($userlink,$arr_data){// проверить прис�
             if(in_array($userlink, $arr_data)){//если ссылка уже в массиве
             return true; 
         }
+    }
     };
 
 // Информация будет храниться в файле следующим образом:
@@ -95,8 +100,8 @@ function findExistentShortURL($arr_data, $userlink,$max_len){
 function reduce_rename_url($url, $max_len, $file){
     $url_len = strlen($url);//длина ссылки
     if($url_len > $max_len ){
-        $http  = parse_url($url, PHP_URL_SCHEME));// http
-        $shortlink = $http . generateUrlName($max_len); //короткая ссылка http+ new url name
+        $http  = parse_url($url, PHP_URL_SCHEME);// http
+        $shortlink = $http . '//' .generateUrlName($max_len); //короткая ссылка http+ new url name
         return $shortlink;
     }
 }
@@ -109,13 +114,16 @@ $url_name = substr($chars, rand(1, strlen($chars)), $max_len);
 return $url_name;
 }
 
-//substr(вх.строка $string ,с какого символа int $start , int $length  ) : string
-// var_dump($url);
 
-//запись сокращенной ссылки в файл после длинной
-function record_shortURL($arr_data, $newUrl, $userlink){
+//запись сокращенной ссылки в файл после длинной ссылки
+function record_shortURL($arr_data, $newUrl, $userlink,$filename){
     $key = array_search($userlink, $arr_data);//Возвращает ключ для $userlink
     foreach($arr_data as $link){ //перебор массива
-    $arr_data[$key]= $userlink . ": $newUrl";// соединяем строки старой ссылки с новой в элементе массива
-    }
+    $item_Url_in_array= $arr_data[$key];}//
+    $item_Url_in_array= $userlink . ":" . $newUrl;// соединяем строки старой ссылки с новой в элементе массива
+    fopen($filename);
+    file_put_contents($filename, $item_Url_in_array, FILE_APPEND | LOCK_EX);
+    fclose($filename); 
 }
+
+reduce_url($userlink, $filename, $max_len, $arr_data);
